@@ -1,0 +1,109 @@
+---
+- hosts: all
+  gather_facts: yes
+
+  vars:
+    - tmpdir: "/tmp/ansible"
+
+  tasks:
+    - name: Ensuring EPEL is installed.
+      yum:
+        name: epel-release
+        state: present
+
+    - name: Ensuring yum utils is installed.
+      yum:
+        name: yum-utils
+        state: present
+
+    - name: Ensuring wget is installed.
+      yum:
+        name: wget
+        state: present
+
+    - name: Ensuring git is installed.
+      yum:
+        name: git
+        state: present
+
+    - name: Ensuring ansible is installed.
+      yum:
+        name: ansible
+        state: present
+
+    - name: Ensuring python3-pip is installed.
+      yum:
+        name: python3-pip
+        state: present
+
+    - name: Ensuring virtualenv is installed.
+      pip:
+        name: virtualenv
+
+    - name: Ensuring hashicorp repo is added.
+      shell: yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+
+    - name: Ensuring terraform is installed.
+      yum:
+        name: terraform
+        state: present
+    # Installing pre-requistes
+    - name: Installing azure python
+      pip:
+        name: ansible[azure]
+# Creating a file.
+    - name: Creating root directory
+      file:
+        path: /root/.azure
+        state: directory
+        mode: u+rwx,g+rwx,o+rx
+
+    - name: Create azure profile
+      file:
+        path: /root/.azure/azureProfile.json
+        state: touch
+        mode: u+rw,g+rw,o+r
+
+    # tasks file for jenkins
+    - name: Installing boto.
+      pip:
+        name: boto
+
+    - name: Installing boto3.
+      pip:
+        name: boto3
+
+    - name: Download docker-ce
+      get_url:
+       url: https://get.docker.com/
+       dest: /tmp/docker.sh
+       mode: '777'
+
+    - name: Ensuring docker is installed.
+      shell: sh /tmp/docker.sh
+
+    - name: Enable docker service.
+      service:
+        name: docker
+        enabled: yes
+
+    - name: Start docker service.
+      service:
+        name: docker
+        state: started
+
+    - name: Grant docker privilages.
+      shell: sudo usermod -aG docker vagrant
+
+    - name: Ensure stable version of docker-compose installed
+      pip:
+        name: docker-compose==1.9.0
+
+    - name: Clone awx
+      git:
+        repo: 'https://github.com/ansible/awx.git'
+        dest: "{{ tmpdir }}"
+        clone: yes
+
+    - name: Install AWX
+      command: ansible-playbook -i {{ tmpdir }}/installer/inventory {{ tmpdir }}/installer/install.yml

@@ -1,0 +1,6 @@
+awx ansible_ssh_host=193.167.33.55 ansible_ssh_private_key_file=/vagrant/.vagrant/machines/default/virtualbox/private_key
+[practise]
+awx
+[practise:vars]
+ansible_ssh_user=vagrant
+ansible_ssh_pass=vagrant
